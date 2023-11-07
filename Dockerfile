@@ -16,7 +16,7 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
 
-RUN npm run build
+RUN pnpm build
 
 FROM node:18-alpine AS runner
 WORKDIR /app
@@ -26,11 +26,11 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 yebobuild
 RUN adduser --system --uid 1001 yebobuild
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
+#COPY --from=builder /app/public ./public
+COPY --from=builder /package.json ./package.json
 
-COPY --from=builder --chown=yebobuild:yebobuild /app/.next/standalone ./
-COPY --from=builder --chown=yebobuild:yebobuild /app/.next/static ./.next/static
+#COPY --from=builder --chown=yebobuild:yebobuild /app/.next/standalone ./
+#COPY --from=builder --chown=yebobuild:yebobuild /app/.next/static ./.next/static
 
 USER yebobuild
 

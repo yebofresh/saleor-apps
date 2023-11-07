@@ -48,16 +48,7 @@ jobs:
     - name: Build App Image
       run: |
         docker build -t "$REGISTRY_HOSTNAME"/"$GCR_PROJECT"/"$IMAGE":"$GITHUB_SHA" \
-          --build-arg NUVO_API_KEY="$NUVO_API_KEY" \
-          --build-arg GITHUB_REF="$GITHUB_REF" \
-          --build-arg SENTRY_DSN="$SENTRY_DSN" \
-          --build-arg SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
-          --build-arg SENTRY_ORG="$SENTRY_ORG" \
-          --build-arg SENTRY_PROJECT="$SENTRY_PROJECT" \
-          --build-arg APP_URI="$APP_URI" \
-          --build-arg YES_API_URL="$YES_API_URL" \
-          --build-arg GOOGLE_ANALYTICS_ID="$GOOGLE_ANALYTICS_ID" \
-          --build-arg ASSETS_URL="$ASSETS_URL" .
+          --build-arg NUVO_API_KEY="$NUVO_API_KEY" .
 
     # Push the Docker image to Google Container Registry
     - name: Publish App Image to GCR
