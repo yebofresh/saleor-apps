@@ -1,0 +1,82 @@
+# This workflow will build a docker container, publish it to Google Container Registry.
+
+name: Build and Deploy Saleor Apps Image to GCR
+
+on:
+  push:
+    branches:
+    - yebofresh/main
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GCR_PROJECT: ${{ secrets.GCR_PROJECT }}
+  GITHUB_SHA: ${{ github.sha }}
+  IMAGE: saleor-apps
+  REGISTRY_HOSTNAME: eu.gcr.io
+  NUVO_API_KEY: ${{ secrets.NUVO_API_KEY }}
+
+jobs:
+  setup-build-publish:
+    name: Setup, Build, Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Google WIF Authentication
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        token_format: 'access_token'
+        workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+        service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
+    # Setup gcloud CLI
+    - uses: google-github-actions/setup-gcloud@v1
+
+    # Login to Docker
+    - uses: 'docker/login-action@v1'
+      with:
+        registry: '${{ env.REGISTRY_HOSTNAME }}'
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
+
+    - name: Build App Image
+      run: |
+        docker build -t "$REGISTRY_HOSTNAME"/"$GCR_PROJECT"/"$IMAGE":"$GITHUB_SHA" \
+          --build-arg NUVO_API_KEY="$NUVO_API_KEY" \
+          --build-arg GITHUB_REF="$GITHUB_REF" \
+          --build-arg SENTRY_DSN="$SENTRY_DSN" \
+          --build-arg SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
+          --build-arg SENTRY_ORG="$SENTRY_ORG" \
+          --build-arg SENTRY_PROJECT="$SENTRY_PROJECT" \
+          --build-arg APP_URI="$APP_URI" \
+          --build-arg YES_API_URL="$YES_API_URL" \
+          --build-arg GOOGLE_ANALYTICS_ID="$GOOGLE_ANALYTICS_ID" \
+          --build-arg ASSETS_URL="$ASSETS_URL" .
+
+    # Push the Docker image to Google Container Registry
+    - name: Publish App Image to GCR
+      run: |
+        docker push $REGISTRY_HOSTNAME/$GCR_PROJECT/"$IMAGE":$GITHUB_SHA
+
+    # Notify the #deploy channel on Discord of image creation or failure for deploys
+    - name: Push Notification to Discord
+      uses: sarisia/actions-status-discord@v1.11.0
+      if: ${{ success() }}
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        title: "[Saleor Apps][Production] Image Created"
+        description: "A Docker image has been created and ready for deploy on Rancher.\n\nImage URL: `${{ env.REGISTRY_HOSTNAME }}/${{ env.GCR_PROJECT }}/${{ env.IMAGE }}:${{ env.GITHUB_SHA }}`"
+
+    - name: Push Failure Notification to Discord
+      uses: sarisia/actions-status-discord@v1.11.0
+      if: ${{ failure() }}
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        title: "[Saleor Apps][Production] Image Creation"
+        description: "There was an error creating the Docker image"
