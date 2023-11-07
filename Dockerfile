@@ -3,6 +3,8 @@ RUN apk add --no-cache libc6-compat
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
+RUN pnpm install
+
 FROM node:18-alpine AS builder
 
 ARG NUVO_API_KEY
@@ -22,7 +24,7 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 yebobuild
 RUN adduser --system --uid 1001 yebobuild
 
-#COPY --from=builder /app/public ./public
+COPY --from=builder /apps ./apps
 COPY --from=builder /package.json ./package.json
 
 #COPY --from=builder --chown=yebobuild:yebobuild /app/.next/standalone ./
