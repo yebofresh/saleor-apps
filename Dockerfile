@@ -1,16 +1,13 @@
 FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 FROM node:18-alpine AS builder
 
 ARG NUVO_API_KEY
 
 ENV NEXT_PUBLIC_NUVO_LICENSE_KEY=${NUVO_API_KEY:-0000000000}
-
-WORKDIR /
 
 COPY --from=deps /node_modules ./node_modules
 
@@ -19,7 +16,6 @@ COPY . .
 RUN pnpm build
 
 FROM node:18-alpine AS runner
-WORKDIR /
 
 ENV NODE_ENV production
 
