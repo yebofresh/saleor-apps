@@ -24,6 +24,8 @@ RUN chown -R yebobuild:yebobuild /app
 
 USER yebobuild
 
+WORKDIR /app/apps/data-importer
+
 EXPOSE 3000
 
 ENV PORT 3000
