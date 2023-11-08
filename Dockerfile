@@ -1,21 +1,20 @@
 FROM node:18-alpine AS deps
 RUN apk add --no-cache libc6-compat
-
-# Install pnpm
 RUN npm install -g pnpm
 
 COPY . .
 
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 
 FROM node:18-alpine AS builder
+
+RUN npm install -g pnpm
 
 ARG NUVO_API_KEY
 
 ENV NEXT_PUBLIC_NUVO_LICENSE_KEY=${NUVO_API_KEY:-0000000000}
 
 COPY --from=deps /node_modules ./node_modules
-
 COPY . .
 
 RUN pnpm build
