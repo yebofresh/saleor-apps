@@ -17,7 +17,7 @@ ENV NEXT_PUBLIC_NUVO_LICENSE_KEY=${NUVO_API_KEY:-0000000000}
 #COPY --from=deps /node_modules ./node_modules
 COPY --from=deps . .
 
-RUN pnpm build
+RUN pnpm build --filter=saleor-app-data-importer
 
 FROM node:18-alpine AS runner
 
