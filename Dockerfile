@@ -4,7 +4,7 @@ RUN apk add --no-cache libc6-compat
 # Install pnpm
 RUN npm install -g pnpm
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml packages ./
+COPY . .
 
 RUN pnpm install
 
